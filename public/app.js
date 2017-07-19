@@ -7,6 +7,23 @@ client.configure(feathers.socketio(socket));
 // Get the service for our `messages` endpoint
 const messages = client.service('messages');
 
+// Configure authentication
+client.configure(feathers.authentication({
+  storage: window.localStorage
+}));
+
+client.authenticate({
+  strategy: 'local',
+  email: 'feathers@example.com',
+  password: 'secret'
+}).then((token) => {
+  console.log('User is logged in', token);
+
+  // At this point we have a valid token, so we can fetch restricted data.
+  messages.find().then(page => page.data.forEach(addMessage));
+  messages.on('created', addMessage);
+});
+
 // Add a new message to the list
 function addMessage(message) {
   const chat = document.querySelector('.chat');
@@ -23,9 +40,6 @@ function addMessage(message) {
 
   chat.scrollTop = chat.scrollHeight - chat.clientHeight;
 }
-
-messages.find().then(page => page.data.forEach(addMessage));
-messages.on('created', addMessage);
 
 document.getElementById('send-message').addEventListener('submit', function(ev) {
   const nameInput = document.querySelector('[name="name"]');
